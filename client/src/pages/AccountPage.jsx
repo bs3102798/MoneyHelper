@@ -54,9 +54,70 @@ export default function AccountPage() {
                 <Link className={linkClasses('tracker')} to={'/account/tracker'}>My Tracker</Link>
             </nav>
             {subpage === 'profile' && (
-                <div className=" text-center max-w-xl mxauto">
+                <div className=" text-center max-w-xl mx-auto">
                     Logged in as {user.name} ({user.email}) <br />
                     <button onClick={logout} className="primary max-w-sm mt-2">Logout</button>
+
+                </div>
+            )}
+            {subpage === 'bills' && (
+                <>
+                    <div className=" text-center max-w-xl mx-auto">
+                        what the amount of you bill
+                    </div>
+                    {/*
+
+                    <form className=" flex items-center justify-center  mx-auto">
+                        <div className="">
+                            <div className="">
+                                <label>
+
+                                </label>
+                                <input className="" placeholder="add bill" />
+                                <button className="">test</button>
+
+
+                            </div>
+                        </div>
+                    </form> */}
+                    <section className="flex gap-2 items-end">
+                        <div className=" text-center max-w-xl mx-auto flex gap-3">
+
+                            <input type="text"
+                                placeholder="name category"
+                            // value={CategoryName}
+                            // onChange={ev => setCategoryName(ev.target.value)}
+                            />
+                            <input type="number"
+                                placeholder="price amount"
+                            // value={CategoryName}
+                            // onChange={ev => setCategoryName(ev.target.value)}
+                            />
+                            <div className="pb-2 flex gap-2">
+                                <button
+                                    className="border border-primary"
+                                    type="submit">
+                                    {/* {editedCategory ? 'Update' : 'Create'} */}
+                                    add bill
+                                </button>
+
+                                {/* <button type="button border-primary" onClick={() => {
+                                    // setEditedCategory(null)
+                                    // setCategoryName('')
+                                }}>Delete</button> */}
+                            </div>
+                        </div>
+                    </section>
+                    <div className=" text-center max-w-xl mx-auto mt-20">
+                        bills
+                    </div>
+
+
+                </>
+            )}
+            {subpage === 'tracker' && (
+                <div className=" text-center max-w-xl mx-auto">
+                    Tracker
 
                 </div>
             )}
