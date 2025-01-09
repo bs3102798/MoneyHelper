@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { useContext, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { UserContext } from "../UserContext"
 import { Link, Navigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -7,6 +7,125 @@ import axios from "axios";
 export default function AccountPage() {
     const [redirect, setRedirect] = useState(null);
     const { ready, user, setUser } = useContext(UserContext);
+    const [name, setName] = useState('');
+    const [datetime, setDatetime] = useState('');
+    const [description, setDescription] = useState('');
+    const [transactions, setTransactions] = useState([]);
+    const [bills, setBills] = useState([]);
+    const [price, setPrice] = useState('');
+
+
+    //for myBills
+
+    useEffect(() => {
+        getBills().then(bills => {
+            setBills(bills)
+
+        })
+    }, [])
+
+    function addnewBills(ev) {
+        ev.preventDefault();
+        const url = "http://localhost:4000/api" + '/bill';
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                name,
+                datetime,
+                price
+            })
+        }).then(response => {
+            response.json().then(json => {
+                setName('');
+                setDatetime('');
+                setPrice('');
+                console.log("result", json)
+                setBills(prevBills => {
+                    const updatedBills = [...prevBills, json];
+                    localStorage.setItem('bills', JSON.stringify(updatedBills));
+                    return updatedBills;
+                });
+            })
+        })
+    }
+
+    async function handleDeleteClick(_id) {
+        try {
+            const response = await fetch(`http://localhost:4000/api/bills?id=${_id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete the bill');
+            }
+            setBills(prevBills => {
+                const updatedBills = prevBills.filter(bill => bill._id !== _id);
+                localStorage.setItem('bills', JSON.stringify(updatedBills));
+                return updatedBills;
+            });
+
+            console.log('Bill deleted successfully');
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    async function getBills() {
+        const url = "http://localhost:4000/api" + '/bills';
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+        })
+
+        return await response.json();
+
+    }
+
+    //for transactions
+    useEffect(() => {
+        getTransactions().then(transactions => {
+            setTransactions(transactions)
+
+        })
+
+    }, [])
+    async function getTransactions() {
+        const url = "http://localhost:4000/api" + '/transactions'
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+        })
+
+
+        return await response.json();
+    }
+
+    function addNewTransAction(ev) {
+        ev.preventDefault();
+        const url = "http://localhost:4000/api" + '/transaction';
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                name,
+                description,
+                datetime,
+                price
+            })
+        }).then(response => {
+            response.json().then(json => {
+                setName('');
+                setDatetime('');
+                setDescription('')
+                setPrice('');
+                console.log('result', json)
+                setTransactions(prevTransactions => [...prevTransactions, json]);
+
+            })
+        })
+    }
 
     let { subpage } = useParams();
     if (subpage === undefined) {
@@ -45,6 +164,24 @@ export default function AccountPage() {
     if (redirect) {
         return <Navigate to={redirect} />
     }
+
+    let balance = 0;
+    let billAmount = 0;
+
+    for (const transanction of transactions) {
+        balance = balance + transanction.price
+    }
+
+    for (const bill of bills) {
+        billAmount = billAmount + bill.price
+    }
+
+    balance = balance.toFixed(2);
+    const fraction = balance.split('.')[2]
+
+    billAmount = billAmount.toFixed(2);
+    const billTotal = billAmount.split('.')[2]
+
     return (
         // <div>account page {user.name} {user.email} </div>
         <div>
@@ -55,71 +192,154 @@ export default function AccountPage() {
             </nav>
             {subpage === 'profile' && (
                 <div className=" text-center max-w-xl mx-auto">
-                    Logged in as {user.name} ({user.email}) <br />
+                    Logged in as <br />
+                    {/* {user.name} <br /> ({user.email}) <br /> */}
+                    <input type="text"
+                        placeholder={user.name} />
+                    <input type="text"
+                        placeholder={user.email} />
+
                     <button onClick={logout} className="primary max-w-sm mt-2">Logout</button>
 
                 </div>
             )}
             {subpage === 'bills' && (
                 <>
-                    <div className=" text-center max-w-xl mx-auto">
-                        what the amount of you bill
-                    </div>
-                    {/*
+                    <div className="max-w-xl mx-auto text-center">
 
-                    <form className=" flex items-center justify-center  mx-auto">
-                        <div className="">
-                            <div className="">
-                                <label>
-
-                                </label>
-                                <input className="" placeholder="add bill" />
-                                <button className="">test</button>
-
-
-                            </div>
+                        <div className=" text-center max-w-xl mx-auto text-center">
+                            total amount of bills
                         </div>
-                    </form> */}
-                    <section className="flex gap-2 items-end">
-                        <div className=" text-center max-w-xl mx-auto flex gap-3">
+                        <h1 className="text-4xl bold text-center">${billAmount}<span>{billTotal}</span></h1>
 
-                            <input type="text"
-                                placeholder="name category"
-                            // value={CategoryName}
-                            // onChange={ev => setCategoryName(ev.target.value)}
-                            />
-                            <input type="number"
-                                placeholder="price amount"
-                            // value={CategoryName}
-                            // onChange={ev => setCategoryName(ev.target.value)}
-                            />
-                            <div className="pb-2 flex gap-2">
-                                <button
-                                    className="border border-primary"
-                                    type="submit">
-                                    {/* {editedCategory ? 'Update' : 'Create'} */}
-                                    add bill
-                                </button>
-
-                                {/* <button type="button border-primary" onClick={() => {
-                                    // setEditedCategory(null)
-                                    // setCategoryName('')
-                                }}>Delete</button> */}
-                            </div>
+                        <section className="">
+                            <form onSubmit={addnewBills}>
+                                <div className=" ">
+                                    <div className="basic flex border-box gap-2">
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={ev => setName(ev.target.value)}
+                                            placeholder="Name of task" />
+                                        <input
+                                            type="number"
+                                            value={price}
+                                            onChange={ev => setPrice(ev.target.value)}
+                                            placeholder=" price of item"
+                                        />
+                                    </div>
+                                    <input
+                                        value={datetime}
+                                        onChange={ev => setDatetime(ev.target.value)}
+                                        type="datetime-local" />
+                                </div>
+                                <button className="primary mt-2" type="submit">add new new</button>
+                            </form>
+                        </section>
+                        <div className=" text-center max-w-xl mx-auto mt-20">
+                            reoccuring bills
                         </div>
-                    </section>
-                    <div className=" text-center max-w-xl mx-auto mt-20">
-                        bills
+                        <div>
+
+                            {bills.length > 0 && bills.map(bill => (
+
+
+                                <div key={bill._id} className="transaction  justify-between flex p-4 border rounded-2xl ">
+                                    <div className="left">
+                                        <div className="name text-2xl">{bill.name}</div>
+                                        <div className="price red text-2xl">{bill.price}</div>
+
+                                    </div>
+                                    <div className="">
+
+                                        <div className="date text-2xl"> Due every month on {new Date(bill.datetime).toLocaleDateString(
+                                            'en-US', {
+
+                                            day: 'numeric',
+
+                                        }
+
+                                        )}</div>
+
+                                        <button
+                                            onClick={() => handleDeleteClick(bill._id)}
+                                            className="rounded-xl w-full bg-red-400"
+                                            type="button">delete</button>
+                                    </div>
+                                </div>
+                            ))}
+
+                        </div>
+
                     </div>
-
-
                 </>
             )}
-            {subpage === 'tracker' && (
-                <div className=" text-center max-w-xl mx-auto">
-                    Tracker
 
+            {subpage === 'tracker' && (
+                <div className="max-w-xl mx-auto text-center">
+                    Tracker
+                    <main>
+                        <h1 className="text-4xl bold text-center">${balance}<span>{fraction}</span></h1>
+                        <form
+                            onSubmit={addNewTransAction}
+                        >
+                            <div className="basic flex border-box gap-2">
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={ev => setName(ev.target.value)}
+                                    placeholder="Name of task" />
+                                <input
+                                    type="number"
+                                    value={price}
+                                    onChange={ev => setPrice(ev.target.value)}
+                                    placeholder=" price of item"
+                                />
+
+                                <input
+                                    value={datetime}
+                                    onChange={ev => setDatetime(ev.target.value)}
+                                    type="datetime-local" />
+                            </div>
+                            <div className="description">
+                                <input
+                                    value={description}
+                                    onChange={ev => setDescription(ev.target.value)}
+                                    type="text"
+                                    placeholder="description" />
+
+                            </div>
+                            <button className="primary mt-2" type="submit">add new transaction</button>
+                        </form>
+
+                        <div className="transaction mt-5 ">
+                            {transactions.length > 0 && transactions.map(transaction => (
+
+                                <div key={transaction._id}
+
+                                    className="transaction  justify-between flex p-4 border rounded-2xl ">
+                                    <div className="left">
+                                        <div className="name text-2xl">{transaction.name}</div>
+                                        <div className="description text-sm ">{transaction.description}</div>
+                                    </div>
+                                    <div className="right">
+                                        <div className={"price text-right " + (transaction.price < 0 ? 'red' : 'green')}>
+                                            {transaction.price}
+                                        </div>
+                                        <div className="datetime">{new Date(transaction.datetime).toLocaleDateString(
+                                            'en-US', {
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                            year: '2-digit',
+                                        }
+                                        )}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </main>
                 </div>
+
             )}
         </div>
     )

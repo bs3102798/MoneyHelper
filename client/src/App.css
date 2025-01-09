@@ -1,0 +1,22 @@
+body {
+    /* background-color: #17181F;
+    color: #ddd; */
+}
+
+main {
+    /* max-width: 360px; */
+    margin: 30px auto;
+}
+
+h1 {
+    /* text-align: center; */
+    margin: 0;
+}
+
+form {
+    margin-top: 20px;
+}
+
+form input {
+    width: 100%;
+}
